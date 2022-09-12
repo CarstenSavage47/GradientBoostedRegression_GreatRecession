@@ -66,7 +66,7 @@ USA_With_Dummies = (USA_With_Dummies
 from sklearn.utils import shuffle
 Shuffled = shuffle(USA_With_Dummies)
 
-USA_Shuffled = USA_With_Dummies.iloc[0:20000]
+USA_Shuffled = Shuffled.iloc[0:20000]
 USA_Shuffled = (USA_Shuffled.query('Total_Income_Adjusted>=0'))
 
 ## Version 1
@@ -125,6 +125,9 @@ for importance_type in ('weight','gain','cover','total_gain','total_cover'):
 
 
 
+
+
+
 ## Version 2
 ## This version drops the year fixed effects to evaluate changes.
 
@@ -179,4 +182,41 @@ for importance_type in ('weight','gain','cover','total_gain','total_cover'):
     print('%s: ' % importance_type, bst.get_score(importance_type=importance_type))
     Importances_2008.append(('%s: ' % importance_type, bst.get_score(importance_type=importance_type)))
 
+
+
+
+
+
+
+
+
+USA_Shuffled_2 = USA_With_Dummies.iloc[0:20000]
+USA_Shuffled_2 = (USA_Shuffled_2.query('Total_Income_Adjusted>=0'))
+USA_Shuffled_2 = USA_Shuffled_2.dropna()
+## Version 1
+
+X_3 = USA_Shuffled_2.drop(['Total_Income_Adjusted','bedrooms_5+ (1970-2000, 2000-2007 ACS/PRCS)',#'ind','yrsusa1',
+                       'inctot','incwelfr'],axis=1)
+y_3 = pandas.DataFrame(USA_Shuffled_2['Total_Income_Adjusted'])
+
+y_3 = y_3.astype(int)
+
+
+y_3 = pandas.DataFrame.to_numpy(y_3)
+
+# Split dataframe into training and testing data. Remember to set a seed.
+X_train_3, X_test_3, y_train_3, y_test_3 = train_test_split(X_3, y_3, test_size=0.2, random_state=47)
+
+
+for i in [0.1, 0.01, 0.001]:
+        gbt = GradientBoostingRegressor(learning_rate=i, n_estimators=753)
+        gbt = gbt.fit(X_train_3, y_train_3)
+        print("predict output for GradientBoostingRegressor: learning_rate={}".format(i))
+        mse = mean_squared_error(y_test_3, gbt.predict(X_test_3))
+        print("The mean squared error (MSE) on test set: {:.4f}".format(mse))
+
+        pred2 = gbt.predict(X_test_3)
+        print("Accuracy on training set: %.3f" % gbt.score(X_train_3, y_train_3))
+        print("Accuracy on test set: %.3f" % gbt.score(X_test_3, y_test_3))
+        print("==============================================")
 
